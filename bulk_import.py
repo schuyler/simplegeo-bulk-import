@@ -53,10 +53,10 @@ def create_client(token=SIMPLEGEO_TOKEN, secret=SIMPLEGEO_SECRET):
 def add_records(client, input_file, sg_layer, callback):
     records = []
     print >>sys.stderr, "Opening %s..." % input_file
-    for id, (point, attrs) in enumerate(read_with_ogr(input_file)):
-        result = callback(id, point, attrs)
+    for id, ((lon, lat), attrs) in enumerate(read_with_ogr(input_file)):
+        result = callback(id, (lat, lon), attrs)
         if result is None: continue
-        id, (lon, lat), attrs = result 
+        id, (lat, lon), attrs = result 
         record = simplegeo.Record(sg_layer, str(id), lat, lon, type="place", **attrs)
         records.append(record)
         if len(records) == 100:
