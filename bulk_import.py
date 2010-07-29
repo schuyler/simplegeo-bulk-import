@@ -50,7 +50,7 @@ def create_client(token=SIMPLEGEO_TOKEN, secret=SIMPLEGEO_SECRET):
     secret = os.environ.get("SIMPLEGEO_SECRET", secret)
     return simplegeo.Client(token, secret)
 
-def add_records(client, input_file, sg_layer, callback):
+def add_records(client, sg_layer, input_file, callback):
     records = []
     print >>sys.stderr, "Opening %s..." % input_file
     for id, ((lon, lat), attrs) in enumerate(read_with_ogr(input_file)):
@@ -76,4 +76,4 @@ if __name__ == "__main__":
         return (id, coords, attrs)
 
     client = create_client()
-    add_records(client, input_file, sg_layer, set_id)
+    add_records(client, sg_layer, input_file, set_id)

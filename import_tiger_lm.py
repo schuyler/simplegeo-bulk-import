@@ -7,5 +7,5 @@ def skip_unnamed_landmarks(id, point, attrs):
 
 client = create_client()
 for input_file in sys.argv[1:]:
-    add_records(client, input_file, "net.nocat.tigerlm", skip_unnamed_landmarks)
+    add_records(client, "net.nocat.tigerlm", input_file, skip_unnamed_landmarks)
 
