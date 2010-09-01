@@ -86,7 +86,7 @@ def get_csv_feature_count(filename):
 
 def read_from_csv(filename):
     csv_file = csv.DictReader(open(filename, mode='U'))
-    if "longitude" not in csv_file or "latitude" not in csv_file:
+    if "longitude" not in csv_file.fieldnames or "latitude" not in csv_file.fieldnames:
         raise Exception(
             'Required "longitude" and "latitude" columns not found in %s"' % filename)
     for record in csv_file:
@@ -162,6 +162,7 @@ def add_records(client, sg_layer, input_file, callback):
     records = []
     start_time = time.time()
     total_imported = 0
+    print >>sys.stderr, "Counting features...",
     if input_file.endswith(".csv"):
         layer = read_from_csv(input_file)
         feature_count = get_csv_feature_count(input_file)
@@ -170,6 +171,7 @@ def add_records(client, sg_layer, input_file, callback):
             raise Exception("OGR Python support is not available")
         layer = read_with_ogr(input_file)
         feature_count = get_ogr_feature_count(input_file)
+    print >>sys.stderr, "%d found." % feature_count
     # print >>sys.stderr, "Opening %s..." % input_file
     for id, ((lon, lat), attrs) in enumerate(layer):
         result = callback(id, (lat, lon), attrs)
