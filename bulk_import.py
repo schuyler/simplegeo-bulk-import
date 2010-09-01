@@ -1,7 +1,7 @@
 import simplegeo
 #import shapely.wkb, shapely.geometry
 import osgeo.ogr
-import sys, os
+import sys, os, time
 
 SIMPLEGEO_TOKEN  = ""
 SIMPLEGEO_SECRET = ""
@@ -52,6 +52,8 @@ def create_client(token=SIMPLEGEO_TOKEN, secret=SIMPLEGEO_SECRET):
 
 def add_records(client, sg_layer, input_file, callback):
     records = []
+    start_time = time.time()
+    total_imported = 0
     print >>sys.stderr, "Opening %s..." % input_file
     for id, ((lon, lat), attrs) in enumerate(read_with_ogr(input_file)):
         result = callback(id, (lat, lon), attrs)
@@ -59,8 +61,11 @@ def add_records(client, sg_layer, input_file, callback):
         id, (lat, lon), attrs = result 
         record = simplegeo.Record(sg_layer, str(id), lat, lon, type="place", **attrs)
         records.append(record)
+        total_imported += 1
         if len(records) == 100:
-            print >>sys.stderr, "Saving %d records to %s..." % (len(records), sg_layer)
+            runtime = time.time() - start_time
+            print >>sys.stderr, "\r%d saved to %s (%.1f/s)" % (
+                total_imported, sg_layer, total_imported/runtime),
             client.add_records(sg_layer, records)
             records = []
     if records:
