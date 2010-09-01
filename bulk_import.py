@@ -104,6 +104,8 @@ def add_records(client, sg_layer, input_file, callback):
         result = callback(id, (lat, lon), attrs)
         if result is None: continue
         id, (lat, lon), attrs = result 
+        if "id" in attrs: # having an ID field in the dict breaks the record constructor
+            attrs["_id"] = attrs.pop("id")
         record = simplegeo.Record(sg_layer, str(id), lat, lon, type="place", **attrs)
         records.append(record)
         total_imported += 1
