@@ -6,6 +6,14 @@ import sys, os, time
 SIMPLEGEO_TOKEN  = ""
 SIMPLEGEO_SECRET = ""
 
+def get_ogr_feature_count (filename):
+    source = osgeo.ogr.Open(filename, False)
+    if not source: raise Exception("Can't open %s" % filename)
+
+    layer = source.GetLayer(0)
+    count = layer.GetFeatureCount()
+    return count if count != -1 else None
+
 def read_with_ogr (filename, fatal_errors=True):
     """Read features out of a shapefile and yield a tuple of (geometry, attrs)
        for each feature."""
@@ -54,6 +62,7 @@ def add_records(client, sg_layer, input_file, callback):
     records = []
     start_time = time.time()
     total_imported = 0
+    feature_count = get_ogr_feature_count(input_file)
     print >>sys.stderr, "Opening %s..." % input_file
     for id, ((lon, lat), attrs) in enumerate(read_with_ogr(input_file)):
         result = callback(id, (lat, lon), attrs)
@@ -64,8 +73,15 @@ def add_records(client, sg_layer, input_file, callback):
         total_imported += 1
         if len(records) == 100:
             runtime = time.time() - start_time
-            print >>sys.stderr, "\r%d saved to %s (%.1f/s)" % (
-                total_imported, sg_layer, total_imported/runtime),
+            records_per_sec = total_imported/runtime
+            if not feature_count:
+                print >>sys.stderr, "\r%d saved to %s (%.1f/s)" % (
+                    total_imported, sg_layer, records_per_sec),
+            else:
+                remaining = (feature_count - total_imported) / records_per_sec
+                print >>sys.stderr, "\r% 6d / % 6d | % 4.1f%% | % 7.1f/s | %d:%02d remaining " % (
+                    total_imported, feature_count, (total_imported / float(feature_count)) * 100,
+                    records_per_sec, remaining/60, int(remaining)%60),
             client.add_records(sg_layer, records)
             records = []
     if records:
