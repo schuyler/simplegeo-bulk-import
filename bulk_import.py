@@ -1,3 +1,74 @@
+#!/usr/bin/env python
+
+##### Set your SimpleGeo credentials here
+
+SIMPLEGEO_TOKEN  = ""
+SIMPLEGEO_SECRET = ""
+
+##### Documentation
+
+"""
+bulk_import.py performs a bulk import of a CSV file containing latitudes and
+longitudes, or a GIS point dataset into the SimpleGeo database.
+
+If available, bulk_import.py uses the Python bindings to the OGR library
+(http://gdal.org/ogr) to read dozens of GIS vector formats, including ESRI
+Shapefiles, GML, KML, GeoRSS, GeoJSON, GPX, and more.
+
+  http://www.gdal.org/ogr/ogr_formats.html
+
+The library uses the python-simplegeo library to write to the SimpleGeo API.
+
+  http://github.com/simplegeo/python-simplegeo
+
+You can set your SimpleGeo credentials in one of two ways: Either set them in
+the script at the very top, or create environment variables in your shell named
+SIMPLEGEO_TOKEN and SIMPLEGEO_SECRET that contain your credentials.
+
+You can use bulk_import.py in one of two ways: First, as a command line script::
+
+    $ python bulk_import.py <SimpleGeo layer> <GIS dataset> [<ID column>]
+
+e.g.::
+
+    $ python bulk_import.py net.nocat.cities cities.gml name
+
+IMPORTANT NOTE FOR CSV FILES: The CSV file must begin with a header line, and
+the columns containing the latitude and longitude *must* be called "latitude"
+and "longitude", respectively. This requirement may be relaxed in a future
+version.
+
+SimpleGeo records require a unique ID. If your dataset has a unique ID column,
+you can provide it. If you leave out the ID column, IDs will be assigned to
+records from the dataset sequentially.
+
+If a simple bulk upload isn't sophisticated enough, you can use bulk_import.py
+as a library, using a callback from your own script to mutate or reject records
+before they are added to your SimpleGeo layer. An example is given in
+import_tiger_lm.py, where we want to reject records that lack a "fullname"
+attribute::
+
+    from bulk_import import create_client, add_records
+    import sys
+
+    def skip_unnamed_landmarks(id, point, attrs):
+        if not attrs["fullname"]: return None
+        return attrs["pointid"], point, attrs
+
+    client = create_client()
+    for input_file in sys.argv[1:]:
+        add_records(client, "net.nocat.tigerlm", input_file, skip_unnamed_landmarks)
+
+As you can see, we create a callback that takes a sequential ID, a (lat, lon)
+tuple, and a dict of attributes. The callback returns None if we don't want to
+store a record from the dataset; otherwise, it returns a tuple (ID, (lat, lon),
+attrs) that is used to create the SimpleGeo record. We then call add_records()
+from bulk_import.py with a client object, the name of an OGR-readable dataset,
+the name of the SimpleGeo layer, and the callback.
+"""
+
+##### No user-serviceable parts below this line
+
 import simplegeo
 #import shapely.wkb, shapely.geometry
 try:
@@ -7,9 +78,6 @@ except ImportError:
     OGR_SUPPORTED = False
 import sys, os, time, csv
 
-SIMPLEGEO_TOKEN  = ""
-SIMPLEGEO_SECRET = ""
-
 def get_csv_feature_count(filename):
     feature_count = 0
     for line in file(filename).xreadlines():
@@ -18,6 +86,9 @@ def get_csv_feature_count(filename):
 
 def read_from_csv(filename):
     csv_file = csv.DictReader(open(filename, mode='U'))
+    if "longitude" not in csv_file or "latitude" not in csv_file:
+        raise Exception(
+            'Required "longitude" and "latitude" columns not found in %s"' % filename)
     for record in csv_file:
         lat = record.pop("latitude")
         lon = record.pop("longitude")

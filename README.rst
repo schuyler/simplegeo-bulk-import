@@ -1,12 +1,11 @@
-bulk_import.py performs a bulk import of a GIS point dataset into the SimpleGeo
-database.
+bulk_import.py performs a bulk import of a CSV file containing latitudes and
+longitudes, or a GIS point dataset into the SimpleGeo database.
 
-bulk_import.py uses the Python bindings to the OGR library
-(http://gdal.org/ogr) to read dozens of GIS vector formats, including
-ESRI Shapefiles, GML, KML, GeoRSS, GeoJSON, GPX, and more.
+If available, bulk_import.py uses the Python bindings to the OGR library
+(http://gdal.org/ogr) to read dozens of GIS vector formats, including ESRI
+Shapefiles, GML, KML, GeoRSS, GeoJSON, GPX, and more.
 
   http://www.gdal.org/ogr/ogr_formats.html
-
 
 The library uses the python-simplegeo library to write to the SimpleGeo API.
 
@@ -23,6 +22,11 @@ You can use bulk_import.py in one of two ways: First, as a command line script::
 e.g.::
 
     $ python bulk_import.py net.nocat.cities cities.gml name
+
+IMPORTANT NOTE FOR CSV FILES: The CSV file must begin with a header line, and
+the columns containing the latitude and longitude *must* be called "latitude"
+and "longitude", respectively. This requirement may be relaxed in a future
+version.
 
 SimpleGeo records require a unique ID. If your dataset has a unique ID column,
 you can provide it. If you leave out the ID column, IDs will be assigned to
