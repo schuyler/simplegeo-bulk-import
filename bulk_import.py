@@ -80,7 +80,7 @@ import sys, os, time, csv
 
 def get_csv_feature_count(filename):
     feature_count = 0
-    for line in file(filename).xreadlines():
+    for line in file(filename, mode="U").xreadlines():
         feature_count += 1
     return feature_count
 
